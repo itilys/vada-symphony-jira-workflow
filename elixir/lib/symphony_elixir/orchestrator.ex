@@ -1,14 +1,13 @@
 defmodule SymphonyElixir.Orchestrator do
   @moduledoc """
-  Polls Linear and dispatches repository copies to Codex-backed workers.
+  Polls the configured tracker and dispatches repository copies to Codex-backed workers.
   """
 
   use GenServer
   require Logger
   import Bitwise, only: [<<<: 2]
 
-  alias SymphonyElixir.{AgentRunner, Config, StatusDashboard, Tracker, Workspace}
-  alias SymphonyElixir.Linear.Issue
+  alias SymphonyElixir.{AgentRunner, Config, Issue, StatusDashboard, Tracker, Workspace}
 
   @continuation_retry_delay_ms 1_000
   @failure_retry_base_ms 10_000
@@ -264,6 +263,22 @@ defmodule SymphonyElixir.Orchestrator do
         Logger.error("Linear project slug missing in WORKFLOW.md")
         state
 
+      {:error, :missing_jira_endpoint} ->
+        Logger.error("Jira endpoint missing in WORKFLOW.md")
+        state
+
+      {:error, :missing_jira_email} ->
+        Logger.error("Jira email missing in WORKFLOW.md")
+        state
+
+      {:error, :missing_jira_api_token} ->
+        Logger.error("Jira API token missing in WORKFLOW.md")
+        state
+
+      {:error, :missing_jira_project_key} ->
+        Logger.error("Jira project key missing in WORKFLOW.md")
+        state
+
       {:error, :missing_tracker_kind} ->
         Logger.error("Tracker kind missing in WORKFLOW.md")
 
@@ -291,7 +306,7 @@ defmodule SymphonyElixir.Orchestrator do
         state
 
       {:error, reason} ->
-        Logger.error("Failed to fetch from Linear: #{inspect(reason)}")
+        Logger.error("Failed to fetch from tracker: #{inspect(reason)}")
         state
 
       false ->

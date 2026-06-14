@@ -1,0 +1,12 @@
+services:
+  symphony:
+    build:
+      context: .
+    env_file:
+      - ${SYMPHONY_ENV_FILE:-.env}
+    ports:
+      - "${SYMPHONY_PORT:-4000}:${SYMPHONY_PORT:-4000}"
+    volumes:
+      - "${SYMPHONY_HOST_WORKSPACE_ROOT:-./var/workspaces}:/workspaces"
+      - "${SYMPHONY_HOST_LOGS_ROOT:-./var/logs}:/logs"
+    restart: unless-stopped

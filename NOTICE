@@ -1,4 +1,13 @@
+VaDa Symphony Jira Workflow
+
+This repository includes code and documentation derived from OpenAI Symphony:
+https://github.com/openai/symphony
+
+OpenAI Symphony notice:
+
 Copyright 2025 OpenAI
+
+Project modifications are contributed by the VaDa Symphony Jira Workflow contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -1,8 +1,6 @@
-defmodule SymphonyElixir.Linear.Issue do
+defmodule SymphonyElixir.Issue do
   @moduledoc """
-  Normalized Linear issue representation.
-
-  New tracker-independent core code should use `SymphonyElixir.Issue`.
+  Normalized issue representation used by the tracker-independent core.
   """
 
   defstruct [

@@ -295,7 +295,7 @@ defmodule SymphonyElixir.WorkspaceAndConfigTest do
     assert :ok = Workspace.remove_issue_workspaces(nil)
   end
 
-  test "linear issue helpers" do
+  test "generic issue helpers" do
     issue = %Issue{
       id: "abc",
       labels: ["frontend", "infra"],
@@ -307,7 +307,7 @@ defmodule SymphonyElixir.WorkspaceAndConfigTest do
     refute issue.assigned_to_worker
   end
 
-  test "linear issue routing requires every configured label" do
+  test "generic issue routing requires every configured label" do
     issue = %Issue{labels: [" Symphony ", "JavaScript"], assigned_to_worker: true}
 
     assert Issue.routable?(issue, [])
@@ -317,6 +317,14 @@ defmodule SymphonyElixir.WorkspaceAndConfigTest do
     refute Issue.routable?(issue, [" "])
     refute Issue.routable?(issue, ["symphony", "security"])
     refute Issue.routable?(%{issue | assigned_to_worker: false}, ["symphony"])
+  end
+
+  test "linear issue compatibility helpers remain available" do
+    issue = %SymphonyElixir.Linear.Issue{labels: [" Symphony "], assigned_to_worker: true}
+
+    assert SymphonyElixir.Linear.Issue.label_names(issue) == [" Symphony "]
+    assert SymphonyElixir.Linear.Issue.routable?(issue, ["symphony"])
+    refute SymphonyElixir.Linear.Issue.routable?(%{issue | assigned_to_worker: false}, ["symphony"])
   end
 
   test "linear client normalizes blockers from inverse relations" do

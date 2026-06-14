@@ -48,7 +48,11 @@ defmodule SymphonyElixir.Config.Schema do
       field(:kind, :string)
       field(:endpoint, :string, default: "https://api.linear.app/graphql")
       field(:api_key, :string)
+      field(:api_token, :string)
+      field(:email, :string)
       field(:project_slug, :string)
+      field(:project_key, :string)
+      field(:jql, :string)
       field(:assignee, :string)
       field(:required_labels, {:array, :string}, default: [])
       field(:active_states, {:array, :string}, default: ["Todo", "In Progress"])
@@ -60,7 +64,20 @@ defmodule SymphonyElixir.Config.Schema do
       schema
       |> cast(
         attrs,
-        [:kind, :endpoint, :api_key, :project_slug, :assignee, :required_labels, :active_states, :terminal_states],
+        [
+          :kind,
+          :endpoint,
+          :api_key,
+          :api_token,
+          :email,
+          :project_slug,
+          :project_key,
+          :jql,
+          :assignee,
+          :required_labels,
+          :active_states,
+          :terminal_states
+        ],
         empty_values: []
       )
       |> update_change(:required_labels, fn labels ->
@@ -375,6 +392,12 @@ defmodule SymphonyElixir.Config.Schema do
     tracker = %{
       settings.tracker
       | api_key: resolve_secret_setting(settings.tracker.api_key, System.get_env("LINEAR_API_KEY")),
+        api_token: resolve_secret_setting(settings.tracker.api_token, System.get_env("JIRA_API_TOKEN")),
+        email: resolve_secret_setting(settings.tracker.email, System.get_env("JIRA_EMAIL")),
+        endpoint: resolve_tracker_endpoint(settings.tracker),
+        project_slug: resolve_secret_setting(settings.tracker.project_slug, System.get_env("LINEAR_PROJECT_SLUG")),
+        project_key: resolve_secret_setting(settings.tracker.project_key, System.get_env("JIRA_PROJECT_KEY")),
+        jql: resolve_secret_setting(settings.tracker.jql, System.get_env("JIRA_JQL")),
         assignee: resolve_secret_setting(settings.tracker.assignee, System.get_env("LINEAR_ASSIGNEE"))
     }
 
@@ -389,7 +412,12 @@ defmodule SymphonyElixir.Config.Schema do
         turn_sandbox_policy: normalize_optional_map(settings.codex.turn_sandbox_policy)
     }
 
-    %{settings | tracker: tracker, workspace: workspace, codex: codex}
+    server = %{
+      settings.server
+      | host: resolve_secret_setting(settings.server.host, System.get_env("SYMPHONY_HOST")) || "127.0.0.1"
+    }
+
+    %{settings | tracker: tracker, workspace: workspace, codex: codex, server: server}
   end
 
   defp normalize_keys(value) when is_map(value) do
@@ -403,6 +431,16 @@ defmodule SymphonyElixir.Config.Schema do
 
   defp normalize_optional_map(nil), do: nil
   defp normalize_optional_map(value) when is_map(value), do: normalize_keys(value)
+
+  defp resolve_tracker_endpoint(%Tracker{kind: "jira", endpoint: "https://api.linear.app/graphql"}) do
+    resolve_secret_setting(nil, System.get_env("JIRA_SITE"))
+  end
+
+  defp resolve_tracker_endpoint(%Tracker{kind: "jira", endpoint: endpoint}) do
+    resolve_secret_setting(endpoint, System.get_env("JIRA_SITE"))
+  end
+
+  defp resolve_tracker_endpoint(%Tracker{endpoint: endpoint}), do: endpoint
 
   defp normalize_key(value) when is_atom(value), do: Atom.to_string(value)
   defp normalize_key(value), do: to_string(value)

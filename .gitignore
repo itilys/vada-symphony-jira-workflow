@@ -1,0 +1,15 @@
+# Local environment and secrets.
+.env
+.env.*
+!.env.example
+
+# Local runtime output.
+/var/
+/workspaces/
+/logs/
+
+# Editor / OS temporary files.
+.DS_Store
+*.swp
+*.swo
+*~

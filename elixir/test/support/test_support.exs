@@ -12,7 +12,7 @@ defmodule SymphonyElixir.TestSupport do
       alias SymphonyElixir.Config
       alias SymphonyElixir.HttpServer
       alias SymphonyElixir.Linear.Client
-      alias SymphonyElixir.Linear.Issue
+      alias SymphonyElixir.Issue
       alias SymphonyElixir.Orchestrator
       alias SymphonyElixir.PromptBuilder
       alias SymphonyElixir.StatusDashboard
@@ -95,7 +95,11 @@ defmodule SymphonyElixir.TestSupport do
           tracker_kind: "linear",
           tracker_endpoint: "https://api.linear.app/graphql",
           tracker_api_token: "token",
+          tracker_jira_api_token: nil,
+          tracker_email: nil,
           tracker_project_slug: "project",
+          tracker_project_key: nil,
+          tracker_jql: nil,
           tracker_assignee: nil,
           tracker_required_labels: [],
           tracker_active_states: ["Todo", "In Progress"],
@@ -133,7 +137,11 @@ defmodule SymphonyElixir.TestSupport do
     tracker_kind = Keyword.get(config, :tracker_kind)
     tracker_endpoint = Keyword.get(config, :tracker_endpoint)
     tracker_api_token = Keyword.get(config, :tracker_api_token)
+    tracker_jira_api_token = Keyword.get(config, :tracker_jira_api_token)
+    tracker_email = Keyword.get(config, :tracker_email)
     tracker_project_slug = Keyword.get(config, :tracker_project_slug)
+    tracker_project_key = Keyword.get(config, :tracker_project_key)
+    tracker_jql = Keyword.get(config, :tracker_jql)
     tracker_assignee = Keyword.get(config, :tracker_assignee)
     tracker_required_labels = Keyword.get(config, :tracker_required_labels)
     tracker_active_states = Keyword.get(config, :tracker_active_states)
@@ -172,7 +180,11 @@ defmodule SymphonyElixir.TestSupport do
         "  kind: #{yaml_value(tracker_kind)}",
         "  endpoint: #{yaml_value(tracker_endpoint)}",
         "  api_key: #{yaml_value(tracker_api_token)}",
+        "  api_token: #{yaml_value(tracker_jira_api_token)}",
+        "  email: #{yaml_value(tracker_email)}",
         "  project_slug: #{yaml_value(tracker_project_slug)}",
+        "  project_key: #{yaml_value(tracker_project_key)}",
+        "  jql: #{yaml_value(tracker_jql)}",
         "  assignee: #{yaml_value(tracker_assignee)}",
         "  required_labels: #{yaml_value(tracker_required_labels)}",
         "  active_states: #{yaml_value(tracker_active_states)}",

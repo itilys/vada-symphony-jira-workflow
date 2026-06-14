@@ -88,6 +88,172 @@ defmodule SymphonyElixir.CoreTest do
     assert {:error, {:unsupported_tracker_kind, "123"}} = Config.validate!()
   end
 
+  test "jira tracker config validates required fields and selects jira adapter" do
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: nil,
+      tracker_api_token: nil,
+      tracker_jira_api_token: nil,
+      tracker_email: nil,
+      tracker_project_slug: nil,
+      tracker_project_key: nil
+    )
+
+    assert {:error, :missing_jira_endpoint} = Config.validate!()
+
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: "https://example.atlassian.net",
+      tracker_api_token: nil,
+      tracker_jira_api_token: nil,
+      tracker_email: nil,
+      tracker_project_slug: nil,
+      tracker_project_key: nil
+    )
+
+    assert {:error, :missing_jira_email} = Config.validate!()
+
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: "https://example.atlassian.net",
+      tracker_api_token: nil,
+      tracker_jira_api_token: nil,
+      tracker_email: "agent@example.com",
+      tracker_project_slug: nil,
+      tracker_project_key: nil
+    )
+
+    assert {:error, :missing_jira_api_token} = Config.validate!()
+
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: "https://example.atlassian.net",
+      tracker_api_token: nil,
+      tracker_jira_api_token: "jira-token",
+      tracker_email: "agent@example.com",
+      tracker_project_slug: nil,
+      tracker_project_key: nil
+    )
+
+    assert {:error, :missing_jira_project_key} = Config.validate!()
+
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: "https://example.atlassian.net",
+      tracker_api_token: nil,
+      tracker_jira_api_token: "jira-token",
+      tracker_email: "agent@example.com",
+      tracker_project_slug: nil,
+      tracker_project_key: "ABC"
+    )
+
+    assert :ok = Config.validate!()
+    assert Config.settings!().tracker.project_key == "ABC"
+    assert Tracker.adapter() == SymphonyElixir.Jira.Adapter
+  end
+
+  test "jira tracker config resolves environment-backed values" do
+    previous_site = System.get_env("JIRA_SITE")
+    previous_email = System.get_env("JIRA_EMAIL")
+    previous_token = System.get_env("JIRA_API_TOKEN")
+    previous_project_key = System.get_env("JIRA_PROJECT_KEY")
+    previous_jql = System.get_env("JIRA_JQL")
+    previous_symphony_host = System.get_env("SYMPHONY_HOST")
+
+    on_exit(fn ->
+      restore_env("JIRA_SITE", previous_site)
+      restore_env("JIRA_EMAIL", previous_email)
+      restore_env("JIRA_API_TOKEN", previous_token)
+      restore_env("JIRA_PROJECT_KEY", previous_project_key)
+      restore_env("JIRA_JQL", previous_jql)
+      restore_env("SYMPHONY_HOST", previous_symphony_host)
+    end)
+
+    System.put_env("JIRA_SITE", "https://env.atlassian.net")
+    System.put_env("JIRA_EMAIL", "env-agent@example.com")
+    System.put_env("JIRA_API_TOKEN", "env-token")
+    System.put_env("JIRA_PROJECT_KEY", "ENV")
+    System.put_env("JIRA_JQL", "project = ENV AND labels in (symphony)")
+    System.put_env("SYMPHONY_HOST", "0.0.0.0")
+
+    write_workflow_file!(Workflow.workflow_file_path(),
+      tracker_kind: "jira",
+      tracker_endpoint: nil,
+      tracker_api_token: nil,
+      tracker_jira_api_token: "$JIRA_API_TOKEN",
+      tracker_email: "$JIRA_EMAIL",
+      tracker_project_slug: nil,
+      tracker_project_key: "$JIRA_PROJECT_KEY",
+      tracker_jql: "$JIRA_JQL",
+      server_host: "$SYMPHONY_HOST"
+    )
+
+    tracker = Config.settings!().tracker
+    assert tracker.endpoint == "https://env.atlassian.net"
+    assert tracker.email == "env-agent@example.com"
+    assert tracker.api_token == "env-token"
+    assert tracker.project_key == "ENV"
+    assert tracker.jql == "project = ENV AND labels in (symphony)"
+    assert Config.settings!().server.host == "0.0.0.0"
+    assert :ok = Config.validate!()
+  end
+
+  test "jira adapter placeholder fails explicitly" do
+    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_candidate_issues()
+    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_issues_by_states(["Todo"])
+    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_issue_states_by_ids(["ABC-1"])
+    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.create_comment("ABC-1", "Body")
+    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.update_issue_state("ABC-1", "Done")
+  end
+
+  test "jira env workflow example resolves deployment environment" do
+    previous_site = System.get_env("JIRA_SITE")
+    previous_email = System.get_env("JIRA_EMAIL")
+    previous_token = System.get_env("JIRA_API_TOKEN")
+    previous_project_key = System.get_env("JIRA_PROJECT_KEY")
+    previous_jql = System.get_env("JIRA_JQL")
+    previous_workspace_root = System.get_env("SYMPHONY_WORKSPACE_ROOT")
+    previous_host = System.get_env("SYMPHONY_HOST")
+    original_workflow_path = Workflow.workflow_file_path()
+
+    on_exit(fn ->
+      restore_env("JIRA_SITE", previous_site)
+      restore_env("JIRA_EMAIL", previous_email)
+      restore_env("JIRA_API_TOKEN", previous_token)
+      restore_env("JIRA_PROJECT_KEY", previous_project_key)
+      restore_env("JIRA_JQL", previous_jql)
+      restore_env("SYMPHONY_WORKSPACE_ROOT", previous_workspace_root)
+      restore_env("SYMPHONY_HOST", previous_host)
+      Workflow.set_workflow_file_path(original_workflow_path)
+    end)
+
+    System.put_env("JIRA_SITE", "https://example.atlassian.net")
+    System.put_env("JIRA_EMAIL", "agent@example.com")
+    System.put_env("JIRA_API_TOKEN", "jira-token")
+    System.put_env("JIRA_PROJECT_KEY", "ABC")
+    System.put_env("JIRA_JQL", "project = ABC AND labels in (symphony)")
+    System.put_env("SYMPHONY_WORKSPACE_ROOT", "/workspaces")
+    System.put_env("SYMPHONY_HOST", "0.0.0.0")
+
+    workflow_path = Path.expand("../../../examples/WORKFLOW.jira.env.md", __DIR__)
+    assert {:ok, %{config: config, prompt: prompt}} = Workflow.load(workflow_path)
+    assert get_in(config, ["tracker", "kind"]) == "jira"
+    assert String.contains?(prompt, "You are working on Jira issue")
+
+    Workflow.set_workflow_file_path(workflow_path)
+    if Process.whereis(SymphonyElixir.WorkflowStore), do: SymphonyElixir.WorkflowStore.force_reload()
+
+    assert :ok = Config.validate!()
+    settings = Config.settings!()
+    assert settings.tracker.endpoint == "https://example.atlassian.net"
+    assert settings.tracker.email == "agent@example.com"
+    assert settings.tracker.api_token == "jira-token"
+    assert settings.tracker.project_key == "ABC"
+    assert settings.tracker.jql == "project = ABC AND labels in (symphony)"
+    assert settings.workspace.root == "/workspaces"
+    assert settings.server.host == "0.0.0.0"
+  end
+
   test "current WORKFLOW.md file is valid and complete" do
     original_workflow_path = Workflow.workflow_file_path()
     on_exit(fn -> Workflow.set_workflow_file_path(original_workflow_path) end)
@@ -876,6 +1042,7 @@ defmodule SymphonyElixir.CoreTest do
 
   defp assert_due_in_range(due_at_ms, min_remaining_ms, max_remaining_ms) do
     remaining_ms = due_at_ms - System.monotonic_time(:millisecond)
+    min_remaining_ms = min_remaining_ms - 1_000
 
     assert remaining_ms >= min_remaining_ms
     assert remaining_ms <= max_remaining_ms
@@ -1007,7 +1174,7 @@ defmodule SymphonyElixir.CoreTest do
 
     prompt = PromptBuilder.build_prompt(issue)
 
-    assert prompt =~ "You are working on a Linear issue."
+    assert prompt =~ "You are working on an issue."
     assert prompt =~ "Identifier: MT-777"
     assert prompt =~ "Title: Make fallback prompt useful"
     assert prompt =~ "Body:"

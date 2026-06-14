@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+!.env.example
+
+elixir/_build
+elixir/deps
+elixir/log
+elixir/logs
+elixir/tmp
+elixir/cover
+elixir/.elixir_ls
+
+var
+workspaces
+logs
+.DS_Store

@@ -76,6 +76,7 @@ Not yet implemented:
 - [`docs/jira-cloud-adapter-plan.md`](docs/jira-cloud-adapter-plan.md) - implementation plan.
 - [`docs/env-and-docker.md`](docs/env-and-docker.md) - ENV and Docker guide.
 - [`docs/upstream-maintenance.md`](docs/upstream-maintenance.md) - syncing and publishing guide.
+- [`AGENTS.md`](AGENTS.md) - operating guide for humans and AI agents.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - contribution rules.
 - [`SECURITY.md`](SECURITY.md) - security posture and secret-handling guidance.
 
@@ -205,16 +206,10 @@ Do not commit:
 
 The intended public home for this project is:
 
-<https://github.com/itilys/vada-smart-house-self-coding-workflow>
+<https://github.com/itilys/vada-symphony-jira-workflow>
 
-Recommended repository name if/when this repo is renamed:
-
-```text
-vada-symphony-jira-workflow
-```
-
-Why: it keeps the VaDa identity, makes the Symphony relationship obvious, and describes the Jira
-control-plane focus without implying this is an official OpenAI project.
+Why: the name keeps the VaDa identity, makes the Symphony relationship obvious, and describes the
+Jira control-plane focus without implying this is an official OpenAI project.
 
 When syncing with OpenAI Symphony, keep `UPSTREAM_SHA` current and document any non-Jira changes in
 the pull request.

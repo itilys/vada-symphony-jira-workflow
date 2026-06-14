@@ -8,11 +8,12 @@ tests, and operational documentation.
 
 ```bash
 git remote rename origin upstream
-git remote add origin https://github.com/itilys/vada-smart-house-self-coding-workflow.git
+git remote add origin https://github.com/itilys/vada-symphony-jira-workflow.git
 git remote -v
 ```
 
-If the repository is renamed later, update `origin` to the new URL:
+If your local checkout still points at the original bootstrap repository name, update `origin` to the
+current public URL:
 
 ```bash
 git remote set-url origin https://github.com/itilys/vada-symphony-jira-workflow.git

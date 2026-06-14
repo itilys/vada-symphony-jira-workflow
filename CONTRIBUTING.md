@@ -5,6 +5,9 @@ Thanks for helping build the Symphony Jira Cloud adapter.
 This repository is upstream-first: changes should stay as close as possible to OpenAI Symphony unless
 they are required for tracker abstraction, Jira Cloud support, tests, or documentation.
 
+If you work with AI agents or automation, read [AGENTS.md](AGENTS.md) first. It defines the public
+repository rules, source-of-truth order, privacy checks, branch expectations, and validation gates.
+
 ## Local Development
 
 ```bash

@@ -26,6 +26,11 @@ VaDa Symphony Jira Workflow turns Jira issues into isolated implementation runs:
 The immediate goal is a self-hosted pilot that can be run locally or in Docker against a Jira Cloud
 sandbox project and a safe GitHub repository.
 
+A longer-term goal is a privacy-first feedback loop for ChatGPT Apps: a VaDa SmartHouse ChatGPT App
+can suggest that the user sends feedback when the experience is not working, the user reviews and
+confirms that feedback, and Symphony turns the confirmed request into a traceable Jira candidate
+before any implementation run starts.
+
 ## Relationship To OpenAI Symphony
 
 OpenAI Symphony describes an orchestration pattern where project work is turned into isolated,
@@ -65,6 +70,8 @@ Not yet implemented:
 - Jira comments, workpad updates, and transitions.
 - Agent-side constrained Jira tool.
 - End-to-end live Jira pilot.
+- ChatGPT Apps feedback intake tool and widget template.
+- Feedback-to-Symphony analysis and controlled implementation loop.
 
 ## Repository Map
 
@@ -74,6 +81,8 @@ Not yet implemented:
 - [`Dockerfile`](Dockerfile) - container image for the Elixir runtime.
 - [`docker-compose.yml`](docker-compose.yml) - local container runtime with workspaces and logs.
 - [`docs/jira-cloud-adapter-plan.md`](docs/jira-cloud-adapter-plan.md) - implementation plan.
+- [`docs/feedback-to-symphony-loop.md`](docs/feedback-to-symphony-loop.md) - ChatGPT Apps feedback
+  intake roadmap.
 - [`docs/env-and-docker.md`](docs/env-and-docker.md) - ENV and Docker guide.
 - [`docs/upstream-maintenance.md`](docs/upstream-maintenance.md) - syncing and publishing guide.
 - [`AGENTS.md`](AGENTS.md) - operating guide for humans and AI agents.
@@ -188,6 +197,36 @@ Phase 5: Live pilot.
 - One `symphony` label.
 - Human review before merge.
 
+Phase 5A: Feedback intake specification.
+
+- ChatGPT Apps feedback tool schemas.
+- User-reviewed feedback summary.
+- Explicit confirmation before tracker writes.
+- Local fake intake adapter and sanitized fixtures.
+
+Phase 5B: Jira feedback intake.
+
+- Confirmed feedback creates a Jira candidate issue.
+- Idempotent submission to avoid duplicate issues.
+- Feedback status can be checked from the ChatGPT App.
+
+Phase 6: Symphony feedback analysis.
+
+- Deduplicate and classify feedback.
+- Decide whether the request is in scope, safe, and actionable.
+- Require human review for broad, sensitive, or unclear work.
+
+Phase 7: Controlled implementation loop.
+
+- Symphony launches Codex only for accepted, narrow feedback.
+- GitHub PR and CI evidence flow back to Jira.
+- The ChatGPT App can report status without exposing private logs.
+
+Phase 8: User validation loop.
+
+- The ChatGPT App asks whether the change addressed the original feedback.
+- Follow-up feedback returns to the same controlled workflow.
+
 ## Open Source Posture
 
 This project is Apache 2.0 licensed and intended to remain Open Source. Contributions should keep
@@ -200,6 +239,7 @@ Do not commit:
 - Codex auth files;
 - GitHub tokens;
 - raw private Jira issue exports;
+- raw ChatGPT conversations or private feedback payloads;
 - workspace logs containing private code or personal data.
 
 ## Maintainer Notes

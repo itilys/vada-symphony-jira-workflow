@@ -42,13 +42,14 @@ When documentation conflicts, prefer this order:
 1. `README.md` for public project identity, goals, and user-facing quick start.
 2. `UPSTREAM_SHA` for the pinned OpenAI Symphony base commit.
 3. `docs/jira-cloud-adapter-plan.md` for roadmap and phase boundaries.
-4. `docs/env-and-docker.md` for runtime ENV and Docker setup.
-5. `docs/upstream-maintenance.md` for syncing and publishing rules.
-6. `SECURITY.md` for security posture and secret-handling guidance.
-7. `CONTRIBUTING.md` for contribution expectations.
-8. `elixir/AGENTS.md` for Elixir-specific rules under `elixir/`.
-9. Source code and tests for implemented behavior.
-10. `.github/workflows/` for CI behavior.
+4. `docs/feedback-to-symphony-loop.md` for ChatGPT Apps feedback intake design.
+5. `docs/env-and-docker.md` for runtime ENV and Docker setup.
+6. `docs/upstream-maintenance.md` for syncing and publishing rules.
+7. `SECURITY.md` for security posture and secret-handling guidance.
+8. `CONTRIBUTING.md` for contribution expectations.
+9. `elixir/AGENTS.md` for Elixir-specific rules under `elixir/`.
+10. Source code and tests for implemented behavior.
+11. `.github/workflows/` for CI behavior.
 
 If behavior changes in a user-visible or operator-visible way, update the
 relevant docs in the same change.
@@ -65,6 +66,7 @@ change does not include:
 - real GitHub tokens, Jira API tokens, OAuth credentials, SSH private keys,
   Codex auth files, certificates, or deployment credentials;
 - raw Jira issue exports from private projects;
+- raw ChatGPT conversations, private feedback payloads, app session IDs, or user telemetry;
 - workspace logs containing private code, proprietary traces, or personal data;
 - private VaDa internal runbooks, customer names, supplier names, infrastructure
   paths, or operational details that do not apply to this OSS project;
@@ -88,6 +90,7 @@ Use synthetic examples in docs and tests. Prefer placeholder values such as
 - State assumptions, risks, and validation clearly.
 - Add fixtures for API payload behavior instead of relying only on live services.
 - Treat logs, workspaces, and issue payloads as potentially sensitive.
+- Require user-reviewed summaries and explicit confirmation before app feedback becomes tracker work.
 
 ### Do Not
 
@@ -95,6 +98,7 @@ Use synthetic examples in docs and tests. Prefer placeholder values such as
 - Do not break Linear or memory tracker compatibility while adding Jira.
 - Do not claim tests, builds, Docker builds, or live Jira checks that were not run.
 - Do not add secrets or real `.env` files.
+- Do not add silent telemetry, automatic feedback submission, or hidden conversation capture.
 - Do not add broad dependencies, external services, or auth flows without explaining why.
 - Do not mix unrelated refactors, adapter work, Docker work, and docs in one change.
 - Do not imply this is an official OpenAI, Atlassian, Jira, or Codex product.
@@ -220,6 +224,7 @@ examples/
   WORKFLOW.jira.env.md          ENV-driven Jira workflow
 docs/
   jira-cloud-adapter-plan.md
+  feedback-to-symphony-loop.md
   env-and-docker.md
   upstream-maintenance.md
 ```
@@ -232,11 +237,14 @@ Key implementation expectations:
 - Jira Cloud REST code should live under `elixir/lib/symphony_elixir/jira/`.
 - Jira API tests should prefer sanitized fixtures.
 - Real Jira tests should be explicit, opt-in, and sandbox-only.
+- ChatGPT Apps feedback intake must stay consent-based and should feed Jira candidates before any
+  Symphony run starts.
 - The orchestrator owns scheduling, claims, retries, workspaces, and cleanup.
 
 ## Security Expectations
 
-When changing Jira, Codex, GitHub, Docker, ENV, or workspace behavior, document:
+When changing Jira, ChatGPT Apps feedback, Codex, GitHub, Docker, ENV, or workspace behavior,
+document:
 
 - what external service is called;
 - which credentials are required;
@@ -250,6 +258,7 @@ Ask before adding:
 - OAuth flows;
 - public app/Marketplace behavior;
 - telemetry or cloud sync;
+- silent feedback capture or full-conversation upload;
 - write access beyond the current Jira issue;
 - cross-project Jira automation;
 - deletion of comments/issues/workspaces;

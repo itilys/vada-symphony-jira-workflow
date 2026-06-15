@@ -1,6 +1,14 @@
 defmodule SymphonyElixir.CoreTest do
   use SymphonyElixir.TestSupport
 
+  defmodule FakeJiraClient do
+    @moduledoc false
+
+    def fetch_candidate_issues, do: {:ok, [:candidate]}
+    def fetch_issues_by_states(states), do: {:ok, [{:states, states}]}
+    def fetch_issue_states_by_ids(issue_ids), do: {:ok, [{:ids, issue_ids}]}
+  end
+
   test "config defaults and validation checks" do
     write_workflow_file!(Workflow.workflow_file_path(),
       tracker_api_token: nil,
@@ -16,6 +24,7 @@ defmodule SymphonyElixir.CoreTest do
     assert config.tracker.active_states == ["Todo", "In Progress"]
     assert config.tracker.terminal_states == ["Closed", "Cancelled", "Canceled", "Duplicate", "Done"]
     assert config.tracker.assignee == nil
+    assert config.agent.mode == "codex"
     assert config.agent.max_turns == 20
 
     write_workflow_file!(Workflow.workflow_file_path(), poll_interval_ms: "invalid")
@@ -36,6 +45,13 @@ defmodule SymphonyElixir.CoreTest do
 
     write_workflow_file!(Workflow.workflow_file_path(), max_turns: 5)
     assert Config.settings!().agent.max_turns == 5
+
+    write_workflow_file!(Workflow.workflow_file_path(), agent_mode: "dry_run")
+    assert Config.settings!().agent.mode == "dry_run"
+    assert :ok = Config.validate!()
+
+    write_workflow_file!(Workflow.workflow_file_path(), agent_mode: "surprise")
+    assert {:error, {:unsupported_agent_mode, "surprise"}} = Config.validate!()
 
     write_workflow_file!(Workflow.workflow_file_path(), tracker_active_states: "Todo,  Review,")
     assert {:error, {:invalid_workflow_config, message}} = Config.validate!()
@@ -198,12 +214,24 @@ defmodule SymphonyElixir.CoreTest do
     assert :ok = Config.validate!()
   end
 
-  test "jira adapter placeholder fails explicitly" do
-    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_candidate_issues()
-    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_issues_by_states(["Todo"])
-    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.fetch_issue_states_by_ids(["ABC-1"])
-    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.create_comment("ABC-1", "Body")
-    assert {:error, :jira_adapter_not_implemented} = SymphonyElixir.Jira.Adapter.update_issue_state("ABC-1", "Done")
+  test "jira adapter delegates read-only calls and rejects writes explicitly" do
+    previous_client = Application.get_env(:symphony_elixir, :jira_client_module)
+
+    on_exit(fn ->
+      if previous_client do
+        Application.put_env(:symphony_elixir, :jira_client_module, previous_client)
+      else
+        Application.delete_env(:symphony_elixir, :jira_client_module)
+      end
+    end)
+
+    Application.put_env(:symphony_elixir, :jira_client_module, FakeJiraClient)
+
+    assert {:ok, [:candidate]} = SymphonyElixir.Jira.Adapter.fetch_candidate_issues()
+    assert {:ok, [{:states, ["Todo"]}]} = SymphonyElixir.Jira.Adapter.fetch_issues_by_states(["Todo"])
+    assert {:ok, [{:ids, ["ABC-1"]}]} = SymphonyElixir.Jira.Adapter.fetch_issue_states_by_ids(["ABC-1"])
+    assert {:error, :jira_write_not_implemented} = SymphonyElixir.Jira.Adapter.create_comment("ABC-1", "Body")
+    assert {:error, :jira_write_not_implemented} = SymphonyElixir.Jira.Adapter.update_issue_state("ABC-1", "Done")
   end
 
   test "jira env workflow example resolves deployment environment" do

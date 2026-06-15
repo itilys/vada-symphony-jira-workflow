@@ -38,6 +38,7 @@ hooks:
   before_run: |
     git status --short
 agent:
+  mode: "$SYMPHONY_AGENT_MODE"
   max_concurrent_agents: 1
   max_turns: 20
 codex:

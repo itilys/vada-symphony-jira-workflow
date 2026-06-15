@@ -197,20 +197,29 @@ defmodule SymphonyElixir.Orchestrator do
   end
 
   defp handle_agent_down(:normal, state, issue_id, running_entry, session_id) do
-    if input_required_blocker?(running_entry) do
-      block_input_required_agent_down(state, issue_id, running_entry, session_id, :normal)
-    else
-      Logger.info("Agent task completed for issue_id=#{issue_id} session_id=#{session_id}; scheduling active-state continuation check")
+    cond do
+      dry_run_completed?(running_entry) ->
+        Logger.info("Dry-run agent task completed for issue_id=#{issue_id} session_id=#{session_id}; releasing claim without continuation retry")
 
-      state
-      |> complete_issue(issue_id)
-      |> schedule_issue_retry(issue_id, 1, %{
-        identifier: running_entry.identifier,
-        issue_url: running_entry.issue.url,
-        delay_type: :continuation,
-        worker_host: Map.get(running_entry, :worker_host),
-        workspace_path: Map.get(running_entry, :workspace_path)
-      })
+        state
+        |> complete_issue(issue_id)
+        |> release_issue_claim(issue_id)
+
+      input_required_blocker?(running_entry) ->
+        block_input_required_agent_down(state, issue_id, running_entry, session_id, :normal)
+
+      true ->
+        Logger.info("Agent task completed for issue_id=#{issue_id} session_id=#{session_id}; scheduling active-state continuation check")
+
+        state
+        |> complete_issue(issue_id)
+        |> schedule_issue_retry(issue_id, 1, %{
+          identifier: running_entry.identifier,
+          issue_url: running_entry.issue.url,
+          delay_type: :continuation,
+          worker_host: Map.get(running_entry, :worker_host),
+          workspace_path: Map.get(running_entry, :workspace_path)
+        })
     end
   end
 
@@ -221,6 +230,12 @@ defmodule SymphonyElixir.Orchestrator do
       retry_agent_down(state, issue_id, running_entry, session_id, reason)
     end
   end
+
+  defp dry_run_completed?(running_entry) when is_map(running_entry) do
+    Map.get(running_entry, :last_codex_event) == :dry_run_completed or Config.settings!().agent.mode == "dry_run"
+  end
+
+  defp dry_run_completed?(_running_entry), do: false
 
   defp block_input_required_agent_down(state, issue_id, running_entry, session_id, reason) do
     error = blocker_error(running_entry, "agent exited: #{inspect(reason)}")

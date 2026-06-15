@@ -58,15 +58,14 @@ Completed:
 - Generic tracker issue model: `SymphonyElixir.Issue`.
 - Explicit tracker adapter selection for `memory`, `linear`, and `jira`.
 - Jira config validation and environment variable resolution.
+- Jira read-only REST search and issue normalization.
 - ENV-first Jira workflow template.
 - Docker and Docker Compose scaffolding.
+- Dry-run agent mode for safe smoke tests without Codex execution.
 - Test coverage for the Jira substrate and ENV workflow.
 
 Not yet implemented:
 
-- Real Jira Cloud REST reads.
-- Jira issue normalization from live API payloads.
-- ADF description/comment conversion.
 - Jira comments, workpad updates, and transitions.
 - Agent-side constrained Jira tool.
 - End-to-end live Jira pilot.
@@ -80,6 +79,7 @@ Not yet implemented:
 - [`.env.example`](.env.example) - runtime variables for local and Docker tests.
 - [`Dockerfile`](Dockerfile) - container image for the Elixir runtime.
 - [`docker-compose.yml`](docker-compose.yml) - local container runtime with workspaces and logs.
+- [`docs/install-and-smoke-test.md`](docs/install-and-smoke-test.md) - v0.1-alpha install path.
 - [`docs/jira-cloud-adapter-plan.md`](docs/jira-cloud-adapter-plan.md) - implementation plan.
 - [`docs/feedback-to-symphony-loop.md`](docs/feedback-to-symphony-loop.md) - ChatGPT Apps feedback
   intake roadmap.
@@ -112,7 +112,7 @@ mise exec -- mix compile --warnings-as-errors
 Expected current result:
 
 ```text
-246 tests, 0 failures, 2 skipped
+252 tests, 0 failures, 2 skipped
 ```
 
 ## ENV-Driven Runtime
@@ -170,12 +170,12 @@ Phase 1: Generic tracker substrate.
 
 Phase 2: Jira read-only adapter.
 
-- Jira REST client.
-- Enhanced JQL search.
-- Pagination.
-- Fixtures.
-- Jira issue normalization.
-- ADF description to Markdown/text.
+- Jira REST client. Initial implementation complete.
+- Enhanced JQL search. Initial implementation complete.
+- Pagination. Initial implementation complete.
+- Fixtures. Initial implementation complete.
+- Jira issue normalization. Initial implementation complete.
+- ADF description to text. Initial implementation complete.
 
 Phase 3: Jira write adapter.
 

@@ -22,21 +22,27 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     bash \
+    autoconf \
     ca-certificates \
     curl \
     git \
+    build-essential \
+    libncurses-dev \
+    libssl-dev \
+    m4 \
     openssh-client \
     unzip \
     xz-utils \
   && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
-  case "${TARGETARCH:-amd64}" in \
+  docker_arch="${TARGETARCH:-$(dpkg --print-architecture)}"; \
+  case "$docker_arch" in \
     amd64) mise_arch="x64" ;; \
     arm64) mise_arch="arm64" ;; \
-    *) echo "Unsupported Docker architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    *) echo "Unsupported Docker architecture: $docker_arch" >&2; exit 1 ;; \
   esac; \
-  curl -fsSL "https://github.com/jdx/mise/releases/download/${MISE_VERSION}/mise-${MISE_VERSION}-linux-${mise_arch}" -o /usr/local/bin/mise; \
+  curl --http1.1 --retry 5 --retry-delay 2 --retry-all-errors -fsSL "https://github.com/jdx/mise/releases/download/${MISE_VERSION}/mise-${MISE_VERSION}-linux-${mise_arch}" -o /usr/local/bin/mise; \
   chmod +x /usr/local/bin/mise; \
   mkdir -p "$MISE_DATA_DIR" "$MISE_CACHE_DIR" "$MISE_CONFIG_DIR" "$MISE_STATE_DIR" "$MIX_HOME" "$HEX_HOME" /workspaces /logs
 

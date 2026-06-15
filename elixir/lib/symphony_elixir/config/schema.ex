@@ -151,6 +151,7 @@ defmodule SymphonyElixir.Config.Schema do
 
     @primary_key false
     embedded_schema do
+      field(:mode, :string, default: "codex")
       field(:max_concurrent_agents, :integer, default: 10)
       field(:max_turns, :integer, default: 20)
       field(:max_retry_backoff_ms, :integer, default: 300_000)
@@ -162,7 +163,7 @@ defmodule SymphonyElixir.Config.Schema do
       schema
       |> cast(
         attrs,
-        [:max_concurrent_agents, :max_turns, :max_retry_backoff_ms, :max_concurrent_agents_by_state],
+        [:mode, :max_concurrent_agents, :max_turns, :max_retry_backoff_ms, :max_concurrent_agents_by_state],
         empty_values: []
       )
       |> validate_number(:max_concurrent_agents, greater_than: 0)
@@ -406,6 +407,11 @@ defmodule SymphonyElixir.Config.Schema do
       | root: resolve_path_value(settings.workspace.root, Path.join(System.tmp_dir!(), "symphony_workspaces"))
     }
 
+    agent = %{
+      settings.agent
+      | mode: resolve_secret_setting(settings.agent.mode, System.get_env("SYMPHONY_AGENT_MODE")) || "codex"
+    }
+
     codex = %{
       settings.codex
       | approval_policy: normalize_keys(settings.codex.approval_policy),
@@ -417,7 +423,7 @@ defmodule SymphonyElixir.Config.Schema do
       | host: resolve_secret_setting(settings.server.host, System.get_env("SYMPHONY_HOST")) || "127.0.0.1"
     }
 
-    %{settings | tracker: tracker, workspace: workspace, codex: codex, server: server}
+    %{settings | tracker: tracker, workspace: workspace, agent: agent, codex: codex, server: server}
   end
 
   defp normalize_keys(value) when is_map(value) do

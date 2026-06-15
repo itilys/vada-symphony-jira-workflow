@@ -85,17 +85,42 @@ defmodule SymphonyElixir.AgentRunner do
   defp send_worker_runtime_info(_recipient, _issue, _worker_host, _workspace), do: :ok
 
   defp run_codex_turns(workspace, issue, codex_update_recipient, opts, worker_host) do
-    max_turns = Keyword.get(opts, :max_turns, Config.settings!().agent.max_turns)
-    issue_state_fetcher = Keyword.get(opts, :issue_state_fetcher, &Tracker.fetch_issue_states_by_ids/1)
+    case Config.settings!().agent.mode do
+      "dry_run" ->
+        send_dry_run_update(codex_update_recipient, issue, workspace)
+        Logger.info("Dry-run agent mode completed for #{issue_context(issue)} workspace=#{workspace}")
+        :ok
 
-    with {:ok, session} <- AppServer.start_session(workspace, worker_host: worker_host) do
-      try do
-        do_run_codex_turns(session, workspace, issue, codex_update_recipient, opts, issue_state_fetcher, 1, max_turns)
-      after
-        AppServer.stop_session(session)
-      end
+      _ ->
+        max_turns = Keyword.get(opts, :max_turns, Config.settings!().agent.max_turns)
+        issue_state_fetcher = Keyword.get(opts, :issue_state_fetcher, &Tracker.fetch_issue_states_by_ids/1)
+
+        with {:ok, session} <- AppServer.start_session(workspace, worker_host: worker_host) do
+          try do
+            do_run_codex_turns(session, workspace, issue, codex_update_recipient, opts, issue_state_fetcher, 1, max_turns)
+          after
+            AppServer.stop_session(session)
+          end
+        end
     end
   end
+
+  defp send_dry_run_update(recipient, %Issue{id: issue_id}, workspace)
+       when is_binary(issue_id) and is_pid(recipient) do
+    send(recipient, {
+      :codex_worker_update,
+      issue_id,
+      %{
+        event: :dry_run_completed,
+        timestamp: DateTime.utc_now(),
+        message: %{mode: :dry_run, workspace: workspace}
+      }
+    })
+
+    :ok
+  end
+
+  defp send_dry_run_update(_recipient, _issue, _workspace), do: :ok
 
   defp do_run_codex_turns(app_session, workspace, issue, codex_update_recipient, opts, issue_state_fetcher, turn_number, max_turns) do
     prompt = build_turn_prompt(issue, opts, turn_number, max_turns)

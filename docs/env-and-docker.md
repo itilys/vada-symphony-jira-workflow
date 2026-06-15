@@ -9,6 +9,7 @@ use the same configuration surface.
 - `examples/WORKFLOW.jira.env.md` is the Jira workflow template that reads those variables.
 - `Dockerfile` builds the Elixir reference runtime with the pinned `mise.toml` versions.
 - `docker-compose.yml` runs Symphony with `.env`, mounted workspaces, mounted logs, and the dashboard port.
+- `SYMPHONY_AGENT_MODE=dry_run` is the safe first smoke-test mode.
 
 ## Local ENV Smoke Test
 
@@ -51,7 +52,10 @@ SYMPHONY_ENV_FILE=.env.example docker compose --env-file .env.example config
 
 ## Notes
 
-- The current Jira adapter is still a placeholder. Real Jira read-only calls start in Phase 2.
+- The Jira adapter currently supports read-only polling. Jira comments and transitions are not
+  implemented yet.
+- `dry_run` prepares workspaces without starting Codex. Switch to `SYMPHONY_AGENT_MODE=codex` only
+  after Codex auth and the target repository workflow are ready.
 - The image does not install or authenticate Codex yet. Before dispatching real agent work, provide
   a working `CODEX_COMMAND` and auth mechanism in the container/runtime.
 - Prefer an HTTPS `SOURCE_REPO_URL` for the first container smoke test. Use SSH only after mounting

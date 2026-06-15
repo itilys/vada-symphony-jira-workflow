@@ -140,6 +140,9 @@ defmodule SymphonyElixir.Config do
       settings.tracker.kind == "jira" and not is_binary(settings.tracker.project_key) ->
         {:error, :missing_jira_project_key}
 
+      settings.agent.mode not in ["codex", "dry_run"] ->
+        {:error, {:unsupported_agent_mode, settings.agent.mode}}
+
       true ->
         :ok
     end

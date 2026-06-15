@@ -1,6 +1,6 @@
 # VaDa Symphony Jira Workflow Plan
 
-Status: draft
+Status: draft, with initial Jira read-only support implemented
 
 VaDa Symphony Jira Workflow starts from OpenAI Symphony upstream and adds Jira Cloud support while
 keeping the core scheduler and runner close to upstream. The first implementation target is a
@@ -42,10 +42,11 @@ self-hosted, single-tenant pilot, not a Marketplace app.
 
 ## Phase 2: Jira Read-Only Adapter
 
-- Implement a Jira REST client for enhanced JQL search.
-- Normalize Jira issues into `SymphonyElixir.Issue`.
-- Convert Jira ADF descriptions to Markdown/text.
+- Implement a Jira REST client for enhanced JQL search. Initial implementation complete.
+- Normalize Jira issues into `SymphonyElixir.Issue`. Initial implementation complete.
+- Convert Jira ADF descriptions to text. Initial implementation complete.
 - Extract labels, status, priority, assignee, issue links, and blockers.
+- Keep read-only smoke tests runnable with `agent.mode: dry_run`.
 
 ## Phase 3: Jira Writes
 
